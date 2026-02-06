@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
 
       if (memberError) {
         return NextResponse.json(
-          { error: "Account created but profile setup failed. Please contact support." },
+          {
+            error: "Account created but profile setup failed. Please contact support.".concat(memberError.message),
+           },
           { status: 500 }
         );
       }
