@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import { getCalendarData } from "@/services/calendarService";
 
 export async function GET() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 501 });
+  try {
+    const data = await getCalendarData();
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
