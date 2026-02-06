@@ -346,6 +346,8 @@ Public Nav: Home | About | Services | Join IC-EMS
 Member Nav: Dashboard | Calendar | Events | Training | Profile | Resources | Logout
 Board Nav: \+ Manage Members | Manage Events | Manage Training
 
+Note: Supervisors see an additional "Supervised" tab within the unified Events page rather than a separate navigation item.
+
 ### **Key Pages**
 
 **Dashboard (Member Home)**
@@ -357,14 +359,15 @@ Board Nav: \+ Manage Members | Manage Events | Manage Training
 * Action items: missing certifications, dues status, pending items
 * Upcoming assignments (next 7 days)
 
-**Events Page**
+**Events Page (Unified)**
 
 * Calendar view (default) showing all events and training
 * List view toggle for detailed information
-* Tabs: All Events | My Events | Past Events
+* Tabs: Upcoming | My Events | Supervised (supervisor+ only) | Past
 * Filter by date, location, role type, event status
 * Clear indication of signup eligibility
 * Waitlist status display
+* Supervisors see assigned member counts and "Manage Hours" links in the Supervised tab
 
 **Profile Page**
 
@@ -489,4 +492,61 @@ Board Nav: \+ Manage Members | Manage Events | Manage Training
 * Advanced reporting and analytics
 * Calendar integration
 * Automated scheduling algorithms
+
+---
+
+## **Implementation Notes**
+
+### **Unified Events Page**
+
+The Events page (`/(member)/events`) has been merged to serve both members and supervisors in a single unified view. The previous separate supervisor route (`/(supervisor)/assigned-events`) now redirects to `/(member)/events`.
+
+**Route structure:**
+
+```
+/(member)/events/page.tsx            → Unified events list with role-based tabs
+/(member)/events/[eventId]/page.tsx  → Event detail / signup page
+/(member)/events/[eventId]/manage/page.tsx → Supervisor hours management page
+/(supervisor)/assigned-events/       → Redirects to /events
+```
+
+**Tab visibility by role:**
+
+| Tab | Members | Supervisors | Board |
+|---|---|---|---|
+| Upcoming | ✓ | ✓ | ✓ |
+| My Events | ✓ | ✓ | ✓ |
+| Supervised | ✗ | ✓ | ✓ |
+| Past | ✓ | ✓ | ✓ |
+
+- The "Supervised" tab is conditionally rendered when `member.position_web <= 2` (Supervisor, Board, or Admin).
+- Supervised events are fetched via `event_signups` where the user is assigned as `position_type = 0` (Supervisor) and `is_assigned = true`.
+- Each supervised event card links to `/events/[eventId]/manage` for hours confirmation.
+
+### **Profile Update Flows**
+
+**Personal Information:**
+
+1. User edits fields (first name, last name, phone, class year, pronouns).
+2. "Save Changes" calls `supabase.from("members").update(...)` for the authenticated user.
+3. Success/error feedback via `sonner` toast notifications.
+
+**Change Password:**
+
+1. User enters new password and confirmation.
+2. Client-side validation: minimum 8 characters, passwords must match.
+3. Password update via `supabase.auth.updateUser({ password })`.
+4. Success/error feedback via `sonner` toast notifications.
+5. Fields are cleared on success.
+
+### **Data Fetching Pattern**
+
+All member-facing pages now fetch real data from Supabase instead of using placeholder/hardcoded values:
+
+- **Dashboard:** Fetches metrics (hours, certs, penalties), upcoming assignments, and recent activity from `members`, `certifications`, `penalty_points`, `event_signups`, and `event_hours` tables.
+- **Events:** Fetches upcoming/past events from `events` table, user signups from `event_signups`.
+- **Training:** Fetches available sessions from `training_sessions`, enrolled sessions via `training_signups`.
+- **Profile:** Fetches certifications from `certifications`, penalty points from `penalty_points`, and member data via `useAuth()`.
+
+All pages implement loading (skeleton), empty, and error states.
 
