@@ -1,5 +1,11 @@
 export function sanitizeString(input: string): string {
-  return input.replace(/<[^>]*>/g, "").trim();
+  let result = input;
+  let prev = "";
+  while (result !== prev) {
+    prev = result;
+    result = result.replace(/<[^>]*>/g, "");
+  }
+  return result.trim();
 }
 
 export function sanitizeEmail(email: string): string {
@@ -11,5 +17,11 @@ export function sanitizePhone(phone: string): string {
 }
 
 export function sanitizeHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, "");
+  let result = input;
+  let prev = "";
+  while (result !== prev) {
+    prev = result;
+    result = result.replace(/<[^>]*>/g, "");
+  }
+  return result;
 }
