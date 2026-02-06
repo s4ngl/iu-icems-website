@@ -406,7 +406,7 @@ const PROJECT_STRUCTURE: FileStructure = {
       'penaltyService.ts': null,
       'calendarService.ts': null
     },
-    'middleware.ts': null,
+    'proxy.ts': null,
     'config': {
       'site.ts': null,
       'navigation.ts': null,

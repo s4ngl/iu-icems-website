@@ -1,9 +1,0 @@
-LOGIN
-- fix icons
-- add show password button
-
-REGISTER
-- fix icons
-- add password constraints and erorr messages
-- add phone number validation
-- add requirement asterisks

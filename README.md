@@ -333,7 +333,7 @@ src/
 │   ├── auth/           # Server-side auth helpers
 │   ├── supabase/       # Supabase client factories
 │   └── utils/          # Utility functions
-├── middleware.ts        # Next.js middleware (auth protection)
+├── proxy.ts        # Next.js middleware (auth protection)
 ├── services/           # Business logic / data access layer
 └── types/              # TypeScript type definitions
 supabase/
