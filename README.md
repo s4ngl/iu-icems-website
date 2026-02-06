@@ -9,7 +9,7 @@ Create a `.env.local` file in the project root with the following variables:
 ```env
 # Supabase — required
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=<your-anon-public-key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-anon-public-key>
 
 # Supabase — available but not used in client code
 DATABASE_PASSWORD=<your-database-password>
@@ -20,7 +20,7 @@ DATABASE_API_KEY=<your-service-role-key>
 | Variable | Where to find it |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API → Project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase Dashboard → Settings → API → `anon` `public` key |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → Settings → API → `anon` `public` key |
 | `DATABASE_PASSWORD` | Set during Supabase project creation |
 | `DATABASE_PROJECT_URL` | Supabase Dashboard → Settings → Database → Connection string |
 | `DATABASE_API_KEY` | Supabase Dashboard → Settings → API → `service_role` key (keep secret) |
