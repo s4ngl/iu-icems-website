@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   IconCalendarEvent,
   IconMapPin2,
@@ -169,7 +170,7 @@ export default function EventDetailPage() {
 
     const hours = parseFloat(hoursInput[userId]);
     if (isNaN(hours) || hours < 0) {
-      alert("Please enter a valid number of hours.");
+      toast.error("Please enter a valid number of hours.");
       return;
     }
 
@@ -221,9 +222,10 @@ export default function EventDetailPage() {
       }
 
       await fetchEventDetails();
+      toast.success("Hours confirmed successfully!");
     } catch (err) {
       console.error("Error confirming hours:", err);
-      alert("Failed to confirm hours. Please try again.");
+      toast.error("Failed to confirm hours. Please try again.");
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);

@@ -123,6 +123,7 @@ export default function AssignedEventsPage() {
 
       // Sort events by date and split into upcoming/past
       const now = new Date();
+      now.setHours(0, 0, 0, 0); // Start of today for better classification
       const sortedEvents = eventsWithDetails.sort((a, b) => 
         new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
       );
