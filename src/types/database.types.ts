@@ -15,14 +15,14 @@ export interface Database {
           first_name: string;
           last_name: string;
           iu_email: string;
-          phone_number: string;
-          gender: number;
-          class_year: number;
-          pronouns: number;
-          position_club: number;
-          position_web: number;
-          psid: string;
-          student_id: string;
+          phone_number: string | null;
+          gender: number | null;
+          class_year: number | null;
+          pronouns: number | null;
+          position_club: number | null;
+          position_web: number | null;
+          psid: string | null;
+          student_id: string | null;
           total_hours: number;
           pending_hours: number;
           dues_paid: boolean;
@@ -36,14 +36,14 @@ export interface Database {
           first_name: string;
           last_name: string;
           iu_email: string;
-          phone_number: string;
-          gender: number;
-          class_year: number;
-          pronouns: number;
-          position_club?: number;
-          position_web?: number;
-          psid?: string;
-          student_id?: string;
+          phone_number?: string | null;
+          gender?: number | null;
+          class_year?: number | null;
+          pronouns?: number | null;
+          position_club?: number | null;
+          position_web?: number | null;
+          psid?: string | null;
+          student_id?: string | null;
           total_hours?: number;
           pending_hours?: number;
           dues_paid?: boolean;
@@ -57,14 +57,14 @@ export interface Database {
           first_name?: string;
           last_name?: string;
           iu_email?: string;
-          phone_number?: string;
-          gender?: number;
-          class_year?: number;
-          pronouns?: number;
-          position_club?: number;
-          position_web?: number;
-          psid?: string;
-          student_id?: string;
+          phone_number?: string | null;
+          gender?: number | null;
+          class_year?: number | null;
+          pronouns?: number | null;
+          position_club?: number | null;
+          position_web?: number | null;
+          psid?: string | null;
+          student_id?: string | null;
           total_hours?: number;
           pending_hours?: number;
           dues_paid?: boolean;
@@ -112,7 +112,7 @@ export interface Database {
           cert_id: string;
           user_id: string;
           cert_type: number;
-          file_path: string;
+          file_path: string | null;
           upload_date: string;
           is_approved: boolean;
           expiration_date: string | null;
@@ -123,7 +123,7 @@ export interface Database {
           cert_id?: string;
           user_id: string;
           cert_type: number;
-          file_path: string;
+          file_path?: string | null;
           upload_date?: string;
           is_approved?: boolean;
           expiration_date?: string | null;
@@ -134,7 +134,7 @@ export interface Database {
           cert_id?: string;
           user_id?: string;
           cert_type?: number;
-          file_path?: string;
+          file_path?: string | null;
           upload_date?: string;
           is_approved?: boolean;
           expiration_date?: string | null;
@@ -171,7 +171,7 @@ export interface Database {
           emt_needed: number;
           supervisor_needed: number;
           is_finalized: boolean;
-          created_by: string;
+          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -186,7 +186,7 @@ export interface Database {
           emt_needed?: number;
           supervisor_needed?: number;
           is_finalized?: boolean;
-          created_by: string;
+          created_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -201,7 +201,7 @@ export interface Database {
           emt_needed?: number;
           supervisor_needed?: number;
           is_finalized?: boolean;
-          created_by?: string;
+          created_by?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -274,7 +274,7 @@ export interface Database {
           hour_id: string;
           event_id: string;
           user_id: string;
-          calculated_hours: number;
+          calculated_hours: number | null;
           confirmed_hours: number | null;
           confirmed_by: string | null;
           is_confirmed: boolean;
@@ -284,7 +284,7 @@ export interface Database {
           hour_id?: string;
           event_id: string;
           user_id: string;
-          calculated_hours: number;
+          calculated_hours?: number | null;
           confirmed_hours?: number | null;
           confirmed_by?: string | null;
           is_confirmed?: boolean;
@@ -294,7 +294,7 @@ export interface Database {
           hour_id?: string;
           event_id?: string;
           user_id?: string;
-          calculated_hours?: number;
+          calculated_hours?: number | null;
           confirmed_hours?: number | null;
           confirmed_by?: string | null;
           is_confirmed?: boolean;
@@ -330,7 +330,7 @@ export interface Database {
           user_id: string;
           points: number;
           reason: string;
-          assigned_by: string;
+          assigned_by: string | null;
           assigned_date: string;
           auto_remove_date: string | null;
           is_active: boolean;
@@ -340,7 +340,7 @@ export interface Database {
           user_id: string;
           points: number;
           reason: string;
-          assigned_by: string;
+          assigned_by?: string | null;
           assigned_date?: string;
           auto_remove_date?: string | null;
           is_active?: boolean;
@@ -350,7 +350,7 @@ export interface Database {
           user_id?: string;
           points?: number;
           reason?: string;
-          assigned_by?: string;
+          assigned_by?: string | null;
           assigned_date?: string;
           auto_remove_date?: string | null;
           is_active?: boolean;
@@ -381,13 +381,13 @@ export interface Database {
           end_time: string;
           location: string;
           description: string | null;
-          max_participants: number;
+          max_participants: number | null;
           is_aha_training: boolean;
           cpr_cost: number | null;
           fa_cost: number | null;
           both_cost: number | null;
           point_contact: string | null;
-          created_by: string;
+          created_by: string | null;
         };
         Insert: {
           training_id?: string;
@@ -397,13 +397,13 @@ export interface Database {
           end_time: string;
           location: string;
           description?: string | null;
-          max_participants: number;
+          max_participants?: number | null;
           is_aha_training?: boolean;
           cpr_cost?: number | null;
           fa_cost?: number | null;
           both_cost?: number | null;
           point_contact?: string | null;
-          created_by: string;
+          created_by?: string | null;
         };
         Update: {
           training_id?: string;
@@ -413,13 +413,13 @@ export interface Database {
           end_time?: string;
           location?: string;
           description?: string | null;
-          max_participants?: number;
+          max_participants?: number | null;
           is_aha_training?: boolean;
           cpr_cost?: number | null;
           fa_cost?: number | null;
           both_cost?: number | null;
           point_contact?: string | null;
-          created_by?: string;
+          created_by?: string | null;
         };
         Relationships: [
           {

@@ -48,6 +48,21 @@ const classYearOptions = [
 
 const pronounOptions = ["He/Him", "She/Her", "They/Them", "Other"] as const;
 
+const classYearMap: Record<string, number> = {
+  freshman: 0,
+  sophomore: 1,
+  junior: 2,
+  senior: 3,
+  other: 4,
+};
+
+const pronounsMap: Record<string, number> = {
+  "he/him": 0,
+  "she/her": 1,
+  "they/them": 2,
+  other: 2,
+};
+
 export default function RegisterPage() {
   const router = useRouter();
   const { signUp, signInWithGoogle } = useAuth();
@@ -80,21 +95,6 @@ export default function RegisterPage() {
       setIsLoading(false);
       return;
     }
-
-    const classYearMap: Record<string, number> = {
-      freshman: 0,
-      sophomore: 1,
-      junior: 2,
-      senior: 3,
-      other: 4,
-    };
-
-    const pronounsMap: Record<string, number> = {
-      "he/him": 0,
-      "she/her": 1,
-      "they/them": 2,
-      other: 2,
-    };
 
     const result = await signUp({
       email,
