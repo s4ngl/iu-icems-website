@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,12 +42,7 @@ export default function ParticipantsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trainingId]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [participantsRes, trainingRes] = await Promise.all([
@@ -69,7 +64,11 @@ export default function ParticipantsPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [trainingId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function handleConfirmPayment(signupId: string) {
     try {

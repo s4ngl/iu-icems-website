@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,12 +43,7 @@ export default function WaitlistPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [assigningId, setAssigningId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
-
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [waitlistRes, eventRes] = await Promise.all([
@@ -69,7 +64,11 @@ export default function WaitlistPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function handleAssign(signupId: string) {
     try {
@@ -100,7 +99,7 @@ export default function WaitlistPage() {
       const response = await fetch(`/api/events/${eventId}/waitlist`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signup_id: signupId, is_assigned: false, assigned_by: null, assigned_time: null }),
+        body: JSON.stringify({ signup_id: signupId, is_assigned: false }),
       });
 
       if (!response.ok) throw new Error("Failed to unassign member");

@@ -49,7 +49,7 @@ export default function ManageEventsPage() {
       if (!response.ok) throw new Error("Failed to fetch events");
       const json = await response.json();
       const data: Event[] = json.data ?? [];
-      setEvents(data.map((e) => ({ ...e, fa_emr_assigned: 0, emt_assigned: 0, supervisor_assigned: 0 })));
+      setEvents(data);
     } catch (error) {
       console.error("Error fetching events:", error);
       setEvents([]);

@@ -49,7 +49,7 @@ export default function ManageTrainingPage() {
       if (!response.ok) throw new Error("Failed to fetch training sessions");
       const json = await response.json();
       const data: TrainingSession[] = json.data ?? [];
-      setSessions(data.map((s) => ({ ...s, participant_count: 0 })));
+      setSessions(data);
     } catch (error) {
       console.error("Error fetching training sessions:", error);
       setSessions([]);
