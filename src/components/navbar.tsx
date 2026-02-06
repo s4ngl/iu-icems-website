@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { IconMenu2, IconX, IconLogout } from "@tabler/icons-react";
+import { IconMenu2, IconX, IconLogout, IconChevronDown } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { publicNav, memberNav, boardNav, supervisorNav } from "@/config/navigation";
@@ -95,10 +95,15 @@ export function Navbar() {
               {user && member ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+                    <button
+                      className="flex items-center gap-1 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      aria-haspopup="true"
+                      aria-label="Open user menu"
+                    >
                       <Avatar size="default">
                         <AvatarFallback>{getInitials()}</AvatarFallback>
                       </Avatar>
+                      <IconChevronDown className="size-4 text-muted-foreground" stroke={2} />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
