@@ -16,69 +16,15 @@ import type { Database } from "@/types/database.types";
 
 type TrainingSession = Database["public"]["Tables"]["training_sessions"]["Row"];
 
-interface TrainingWithParticipants extends TrainingSession {
+export interface TrainingWithParticipants extends TrainingSession {
   participant_count?: number;
 }
 
 interface TrainingManagementTableProps {
-  sessions?: TrainingWithParticipants[];
+  sessions: TrainingWithParticipants[];
   onEdit?: (trainingId: string) => void;
   onDelete?: (trainingId: string) => void;
 }
-
-const DEMO_SESSIONS: TrainingWithParticipants[] = [
-  {
-    training_id: "tr-1",
-    training_name: "BLS/CPR Recertification",
-    training_date: "2025-09-15",
-    start_time: "09:00",
-    end_time: "13:00",
-    location: "SRSC Room 120",
-    description: "AHA BLS/CPR recertification course",
-    max_participants: 20,
-    is_aha_training: true,
-    cpr_cost: 45,
-    fa_cost: 40,
-    both_cost: 75,
-    point_contact: "Jane Doe",
-    created_by: null,
-    participant_count: 14,
-  },
-  {
-    training_id: "tr-2",
-    training_name: "ICS-100 Workshop",
-    training_date: "2025-10-01",
-    start_time: "18:00",
-    end_time: "20:00",
-    location: "Ballantine Hall 103",
-    description: "Introduction to Incident Command System",
-    max_participants: 40,
-    is_aha_training: false,
-    cpr_cost: null,
-    fa_cost: null,
-    both_cost: null,
-    point_contact: "John Smith",
-    created_by: null,
-    participant_count: 22,
-  },
-  {
-    training_id: "tr-3",
-    training_name: "First Aid Certification",
-    training_date: "2025-10-20",
-    start_time: "10:00",
-    end_time: "16:00",
-    location: "IMU Georgian Room",
-    description: "AHA First Aid certification course",
-    max_participants: 15,
-    is_aha_training: true,
-    cpr_cost: 45,
-    fa_cost: 40,
-    both_cost: 75,
-    point_contact: "Jane Doe",
-    created_by: null,
-    participant_count: 8,
-  },
-];
 
 const formatDate = (dateString: string) => {
   return new Date(dateString + "T00:00:00").toLocaleDateString("en-US", {
@@ -89,7 +35,7 @@ const formatDate = (dateString: string) => {
 };
 
 export function TrainingManagementTable({
-  sessions = DEMO_SESSIONS,
+  sessions,
   onEdit,
   onDelete,
 }: TrainingManagementTableProps) {
