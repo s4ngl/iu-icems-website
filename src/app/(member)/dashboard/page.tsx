@@ -170,19 +170,19 @@ export default function DashboardPage() {
       setUpcomingShifts(upcoming);
 
       // Recent activity
-      const recent = (hoursResult.data || []).map((h) => {
-        const evt = h.events as unknown as { event_name: string; event_date: string } | null;
-        return {
-          eventTitle: evt?.event_name || "Unknown Event",
-          dateStr: evt?.event_date
-            ? new Date(evt.event_date).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })
-            : "",
-          hoursLogged: h.confirmed_hours ?? h.calculated_hours ?? 0,
-        };
-      });
+      const recent = (hoursResult.data || [])
+        .filter((h) => h.events != null)
+        .map((h) => {
+          const evt = h.events as unknown as { event_name: string; event_date: string };
+          return {
+            eventTitle: evt.event_name,
+            dateStr: new Date(evt.event_date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            hoursLogged: h.confirmed_hours ?? h.calculated_hours ?? 0,
+          };
+        });
       setRecentShifts(recent);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);

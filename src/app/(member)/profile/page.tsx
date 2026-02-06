@@ -154,8 +154,9 @@ export default function ProfilePage() {
       setIsSaving(true);
       const supabase = createClient();
 
+      const normalizedInput = pronouns.toLowerCase().trim();
       const pronounsIndex = Object.entries(PRONOUNS_LABELS).find(
-        ([, v]) => v === pronouns.toLowerCase().trim()
+        ([, v]) => v.toLowerCase() === normalizedInput
       )?.[0];
 
       const { error: updateError } = await supabase

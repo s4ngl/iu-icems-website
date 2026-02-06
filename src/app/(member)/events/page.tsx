@@ -115,11 +115,7 @@ export default function EventsListPage() {
       setMyEvents(myEventsData);
 
       // Fetch supervised events if the user is a supervisor
-      if (
-        member?.position_web !== null &&
-        member?.position_web !== undefined &&
-        member.position_web <= 2
-      ) {
+      if (isSupervisor) {
         const { data: supervisorSignups, error: supErr } = await supabase
           .from("event_signups")
           .select(
