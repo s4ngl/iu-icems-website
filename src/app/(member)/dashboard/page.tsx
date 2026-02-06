@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   IconClockHour4,
   IconClockPause,
   IconFileCertificate,
   IconAlertOctagon,
-  IconCheckbox,
-  IconSquare,
   IconCalendarDue,
   IconActivity,
   IconArrowNarrowRight,
@@ -21,63 +21,43 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
+import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
 
-export const metadata: Metadata = {
-  title: "Dashboard | IC-EMS",
-  description:
-    "IC-EMS member dashboard with volunteer hours, certification status, and event assignments.",
+type EventHours = Database["public"]["Tables"]["event_hours"]["Row"];
+
+interface UpcomingShift {
+  eventTitle: string;
+  dateTime: string;
+  crewRole: string;
+  venueName: string;
+}
+
+interface RecentShift {
+  eventTitle: string;
+  dateStr: string;
+  hoursLogged: number;
+}
+
+const POSITION_TYPE_LABELS: Record<number, string> = {
+  0: "Supervisor",
+  1: "EMT",
+  2: "FA/EMR",
 };
 
-/*
- * Hard-coded demo values — these will eventually come from
- * Supabase queries against the member's profile row.
- */
-
-const portalMetrics: {
+function StatTile({
+  heading,
+  display,
+  accent,
+  Glyph,
+}: {
   heading: string;
   display: string;
   accent: string;
   Glyph: typeof IconClockHour4;
-}[] = [
-  { heading: "Total Hours", display: "24.5", accent: "text-sky-700 dark:text-sky-400", Glyph: IconClockHour4 },
-  { heading: "Pending Hours", display: "3.0", accent: "text-amber-700 dark:text-amber-400", Glyph: IconClockPause },
-  { heading: "Active Certs", display: "3 / 4", accent: "text-teal-700 dark:text-teal-400", Glyph: IconFileCertificate },
-  { heading: "Penalty Pts", display: "0", accent: "text-rose-700 dark:text-rose-400", Glyph: IconAlertOctagon },
-];
-
-const actionChecklist = [
-  { isDone: false, text: "Upload BLS certification — expires soon" },
-  { isDone: false, text: "Pay membership dues before Dec 31" },
-  { isDone: true, text: "Finish ICS-100 online course" },
-  { isDone: true, text: "Submit headshot for the member directory" },
-  { isDone: false, text: "RSVP to December general body meeting" },
-];
-
-const confirmedShifts = [
-  {
-    eventTitle: "Little 500 Practice — Day 1",
-    dateTime: "Dec 14 · 8 AM–4 PM",
-    crewRole: "EMT",
-    venueName: "Bill Armstrong Stadium",
-  },
-  {
-    eventTitle: "IU Basketball vs. Purdue",
-    dateTime: "Dec 21 · 2–6 PM",
-    crewRole: "FA / EMR",
-    venueName: "Simon Skjodt Assembly Hall",
-  },
-];
-
-const completedShifts = [
-  { eventTitle: "Women's Soccer — Senior Night", dateStr: "Nov 30", hoursLogged: 4.0 },
-  { eventTitle: "Swim & Dive Invitational Day 2", dateStr: "Nov 22", hoursLogged: 6.5 },
-  { eventTitle: "Swim & Dive Invitational Day 1", dateStr: "Nov 21", hoursLogged: 5.0 },
-  { eventTitle: "Monthly Skills Review", dateStr: "Nov 15", hoursLogged: 2.0 },
-];
-
-/* small presentational helpers scoped to this page */
-
-function StatTile({ heading, display, accent, Glyph }: (typeof portalMetrics)[number]) {
+}) {
   return (
     <Card>
       <CardContent className="flex items-center gap-3 pt-6">
@@ -93,25 +73,174 @@ function StatTile({ heading, display, accent, Glyph }: (typeof portalMetrics)[nu
   );
 }
 
-function ChecklistRow({ isDone, text }: { isDone: boolean; text: string }) {
-  return (
-    <li className="flex gap-2">
-      {isDone ? (
-        <IconCheckbox className="mt-px size-5 shrink-0 text-emerald-600" stroke={1.5} />
-      ) : (
-        <IconSquare className="mt-px size-5 shrink-0 text-muted-foreground/50" stroke={1.5} />
-      )}
-      <span className={isDone ? "text-muted-foreground line-through" : ""}>
-        {text}
-      </span>
-    </li>
-  );
-}
-
 export default function DashboardPage() {
+  const { user, member, isLoading: authLoading } = useAuth();
+  const [activeCerts, setActiveCerts] = useState(0);
+  const [totalCerts, setTotalCerts] = useState(0);
+  const [penaltyPoints, setPenaltyPoints] = useState(0);
+  const [upcomingShifts, setUpcomingShifts] = useState<UpcomingShift[]>([]);
+  const [recentShifts, setRecentShifts] = useState<RecentShift[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchDashboardData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user]);
+
+  async function fetchDashboardData() {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+      const supabase = createClient();
+      const now = new Date().toISOString().split("T")[0];
+
+      const [certsResult, penaltiesResult, upcomingResult, hoursResult] =
+        await Promise.all([
+          supabase
+            .from("certifications")
+            .select("cert_id, is_approved, expiration_date")
+            .eq("user_id", user.id),
+          supabase
+            .from("penalty_points")
+            .select("points")
+            .eq("user_id", user.id)
+            .eq("is_active", true),
+          supabase
+            .from("event_signups")
+            .select(
+              "position_type, events (event_name, event_date, start_time, end_time, location)"
+            )
+            .eq("user_id", user.id)
+            .eq("is_assigned", true),
+          supabase
+            .from("event_hours")
+            .select(
+              "confirmed_hours, calculated_hours, is_confirmed, events (event_name, event_date)"
+            )
+            .eq("user_id", user.id)
+            .eq("is_confirmed", true)
+            .order("confirmed_date", { ascending: false })
+            .limit(5),
+        ]);
+
+      // Certifications
+      const certs = certsResult.data || [];
+      const active = certs.filter(
+        (c) =>
+          c.is_approved &&
+          (!c.expiration_date || new Date(c.expiration_date) >= new Date())
+      );
+      setActiveCerts(active.length);
+      setTotalCerts(certs.length);
+
+      // Penalty points
+      const totalPts = (penaltiesResult.data || []).reduce(
+        (sum, p) => sum + p.points,
+        0
+      );
+      setPenaltyPoints(totalPts);
+
+      // Upcoming assignments
+      const upcoming = (upcomingResult.data || [])
+        .filter((s) => {
+          const evt = s.events as unknown as {
+            event_date: string;
+          } | null;
+          return evt && evt.event_date >= now;
+        })
+        .map((s) => {
+          const evt = s.events as unknown as {
+            event_name: string;
+            event_date: string;
+            start_time: string;
+            end_time: string;
+            location: string;
+          };
+          const d = new Date(evt.event_date);
+          const dateLabel = d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+          return {
+            eventTitle: evt.event_name,
+            dateTime: `${dateLabel} · ${evt.start_time.slice(0, 5)}–${evt.end_time.slice(0, 5)}`,
+            crewRole: POSITION_TYPE_LABELS[s.position_type] || "Member",
+            venueName: evt.location,
+          };
+        });
+      setUpcomingShifts(upcoming);
+
+      // Recent activity
+      const recent = (hoursResult.data || []).map((h: EventHours & { events: unknown }) => {
+        const evt = h.events as { event_name: string; event_date: string } | null;
+        return {
+          eventTitle: evt?.event_name || "Unknown Event",
+          dateStr: evt?.event_date
+            ? new Date(evt.event_date).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : "",
+          hoursLogged: h.confirmed_hours ?? h.calculated_hours ?? 0,
+        };
+      });
+      setRecentShifts(recent);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <Skeleton className="h-9 w-48" />
+        <div className="grid gap-4 xs:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  const portalMetrics = [
+    {
+      heading: "Total Hours",
+      display: String(member?.total_hours ?? 0),
+      accent: "text-sky-700 dark:text-sky-400",
+      Glyph: IconClockHour4,
+    },
+    {
+      heading: "Pending Hours",
+      display: String(member?.pending_hours ?? 0),
+      accent: "text-amber-700 dark:text-amber-400",
+      Glyph: IconClockPause,
+    },
+    {
+      heading: "Active Certs",
+      display: `${activeCerts} / ${totalCerts}`,
+      accent: "text-teal-700 dark:text-teal-400",
+      Glyph: IconFileCertificate,
+    },
+    {
+      heading: "Penalty Pts",
+      display: String(penaltyPoints),
+      accent: "text-rose-700 dark:text-rose-400",
+      Glyph: IconAlertOctagon,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
+      <h1 className="text-3xl font-bold tracking-tight">
+        Welcome back{member ? `, ${member.first_name}` : ""}!
+      </h1>
 
       {/* metric tiles */}
       <div className="grid gap-4 xs:grid-cols-2 lg:grid-cols-4">
@@ -121,21 +250,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* action items */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Action Items</CardTitle>
-            <CardDescription>Tasks that need your attention</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-col gap-3">
-              {actionChecklist.map((a) => (
-                <ChecklistRow key={a.text} {...a} />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
         {/* upcoming assignments */}
         <Card>
           <CardHeader>
@@ -143,24 +257,46 @@ export default function DashboardPage() {
             <CardDescription>Shifts you&apos;re confirmed for</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {confirmedShifts.map((s) => (
-              <div key={s.eventTitle} className="rounded-md border px-3 py-2.5">
-                <p className="flex items-start justify-between gap-2">
-                  <span className="font-medium leading-snug">{s.eventTitle}</span>
-                  <Badge variant="outline" className="shrink-0">
-                    {s.crewRole}
-                  </Badge>
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  <IconCalendarDue className="mr-1 inline size-3.5 align-[-2px]" stroke={1.5} />
-                  {s.dateTime}
-                  <IconMapPinFilled className="ml-3 mr-1 inline size-3.5 align-[-2px]" stroke={1.5} />
-                  {s.venueName}
-                </p>
-              </div>
-            ))}
+            {upcomingShifts.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No upcoming assignments. Sign up for an event!
+              </p>
+            ) : (
+              upcomingShifts.map((s) => (
+                <div
+                  key={s.eventTitle}
+                  className="rounded-md border px-3 py-2.5"
+                >
+                  <p className="flex items-start justify-between gap-2">
+                    <span className="font-medium leading-snug">
+                      {s.eventTitle}
+                    </span>
+                    <Badge variant="outline" className="shrink-0">
+                      {s.crewRole}
+                    </Badge>
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <IconCalendarDue
+                      className="mr-1 inline size-3.5 align-[-2px]"
+                      stroke={1.5}
+                    />
+                    {s.dateTime}
+                    <IconMapPinFilled
+                      className="ml-3 mr-1 inline size-3.5 align-[-2px]"
+                      stroke={1.5}
+                    />
+                    {s.venueName}
+                  </p>
+                </div>
+              ))
+            )}
 
-            <Button variant="ghost" size="sm" className="mt-1 self-start" asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-1 self-start"
+              asChild
+            >
               <Link href="/events">
                 Browse all events
                 <IconArrowNarrowRight className="ml-1 size-4" stroke={1.5} />
@@ -169,32 +305,40 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* recent activity spanning both columns */}
-        <Card className="lg:col-span-2">
+        {/* recent activity */}
+        <Card>
           <CardHeader>
             <CardTitle className="inline-flex items-center gap-2">
               <IconActivity className="size-5" stroke={1.5} />
               Recent Activity
             </CardTitle>
-            <CardDescription>Hours credited from recent shifts</CardDescription>
+            <CardDescription>
+              Hours credited from recent shifts
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y">
-              {completedShifts.map((c) => (
-                <li
-                  key={c.eventTitle}
-                  className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
-                >
-                  <span>
-                    <span className="font-medium">{c.eventTitle}</span>
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {c.dateStr}
+            {recentShifts.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No confirmed hours yet.
+              </p>
+            ) : (
+              <ul className="divide-y">
+                {recentShifts.map((c) => (
+                  <li
+                    key={c.eventTitle}
+                    className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <span>
+                      <span className="font-medium">{c.eventTitle}</span>
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        {c.dateStr}
+                      </span>
                     </span>
-                  </span>
-                  <Badge variant="secondary">{c.hoursLogged} hrs</Badge>
-                </li>
-              ))}
-            </ul>
+                    <Badge variant="secondary">{c.hoursLogged} hrs</Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
