@@ -25,6 +25,4 @@ export const boardNav: NavItem[] = [
   { label: "Manage Training", href: "/manage-training" },
 ];
 
-export const supervisorNav: NavItem[] = [
-  { label: "Assigned Events", href: "/assigned-events" },
-];
+export const supervisorNav: NavItem[] = [];

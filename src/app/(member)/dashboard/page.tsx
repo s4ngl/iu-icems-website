@@ -24,9 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
-
-type EventHours = Database["public"]["Tables"]["event_hours"]["Row"];
 
 interface UpcomingShift {
   eventTitle: string;
@@ -173,8 +170,8 @@ export default function DashboardPage() {
       setUpcomingShifts(upcoming);
 
       // Recent activity
-      const recent = (hoursResult.data || []).map((h: EventHours & { events: unknown }) => {
-        const evt = h.events as { event_name: string; event_date: string } | null;
+      const recent = (hoursResult.data || []).map((h) => {
+        const evt = h.events as unknown as { event_name: string; event_date: string } | null;
         return {
           eventTitle: evt?.event_name || "Unknown Event",
           dateStr: evt?.event_date

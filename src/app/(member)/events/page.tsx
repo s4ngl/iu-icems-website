@@ -27,6 +27,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { createClient } from "@/lib/supabase/client";
 import type { Event } from "@/types/event.types";
 
+interface EventWithMemberCount extends Event {
+  assigned_members_count?: number;
+}
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
     weekday: "long",
@@ -49,6 +53,9 @@ export default function EventsListPage() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [myEvents, setMyEvents] = useState<Event[]>([]);
   const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [supervisedEvents, setSupervisedEvents] = useState<
+    EventWithMemberCount[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +113,59 @@ export default function EventsListPage() {
       setUpcomingEvents(upcoming || []);
       setPastEvents(past || []);
       setMyEvents(myEventsData);
+
+      // Fetch supervised events if the user is a supervisor
+      if (
+        member?.position_web !== null &&
+        member?.position_web !== undefined &&
+        member.position_web <= 2
+      ) {
+        const { data: supervisorSignups, error: supErr } = await supabase
+          .from("event_signups")
+          .select(
+            `event_id, events (
+              event_id, event_name, event_date, start_time, end_time,
+              location, description, fa_emr_needed, emt_needed,
+              supervisor_needed, is_finalized, created_by, created_at
+            )`
+          )
+          .eq("user_id", user.id)
+          .eq("position_type", 0)
+          .eq("is_assigned", true);
+
+        if (supErr) throw supErr;
+
+        const uniqueEvents = new Map<string, Event>();
+        (supervisorSignups || []).forEach((signup) => {
+          if (signup.events && !uniqueEvents.has(signup.event_id)) {
+            uniqueEvents.set(
+              signup.event_id,
+              signup.events as unknown as Event
+            );
+          }
+        });
+
+        const eventIds = Array.from(uniqueEvents.keys());
+
+        const eventsWithCounts: EventWithMemberCount[] = await Promise.all(
+          eventIds.map(async (eventId) => {
+            const event = uniqueEvents.get(eventId)!;
+            const { count } = await supabase
+              .from("event_signups")
+              .select("*", { count: "exact", head: true })
+              .eq("event_id", eventId)
+              .eq("is_assigned", true);
+            return { ...event, assigned_members_count: count || 0 };
+          })
+        );
+
+        eventsWithCounts.sort(
+          (a, b) =>
+            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+        );
+
+        setSupervisedEvents(eventsWithCounts);
+      }
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("Failed to load events. Please try again.");
@@ -131,9 +191,7 @@ export default function EventsListPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isSupervisor ? "Events" : "Events"}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Events</h1>
         <p className="mt-1 text-muted-foreground">
           {isSupervisor
             ? "Browse upcoming coverages, manage your sign-ups, and view your assigned supervision events."
@@ -158,6 +216,11 @@ export default function EventsListPage() {
           <TabsTrigger value="mine">
             My Events ({myEvents.length})
           </TabsTrigger>
+          {isSupervisor && (
+            <TabsTrigger value="supervised">
+              Supervised ({supervisedEvents.length})
+            </TabsTrigger>
+          )}
           <TabsTrigger value="history">
             Past ({pastEvents.length})
           </TabsTrigger>
@@ -193,6 +256,29 @@ export default function EventsListPage() {
             ))
           )}
         </TabsContent>
+
+        {/* ---- supervised events (supervisor only) ---- */}
+        {isSupervisor && (
+          <TabsContent
+            value="supervised"
+            className="mt-5 flex flex-col gap-4"
+          >
+            {supervisedEvents.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-16 text-center text-sm text-muted-foreground">
+                  You are not currently assigned to any events as a supervisor.
+                </CardContent>
+              </Card>
+            ) : (
+              supervisedEvents.map((evt) => (
+                <SupervisedEventCard
+                  key={evt.event_id}
+                  event={evt}
+                />
+              ))
+            )}
+          </TabsContent>
+        )}
 
         {/* ---- past events ---- */}
         <TabsContent value="history" className="mt-5 flex flex-col gap-4">
@@ -272,6 +358,96 @@ function EventCard({
         <Button size="sm" asChild>
           <Link href={`/events/${event.event_id}`}>
             {isPast ? "View Details" : "Sign Up"}
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function SupervisedEventCard({
+  event,
+}: {
+  event: EventWithMemberCount;
+}) {
+  const isPast = new Date(event.event_date) < new Date();
+
+  const positionsNeeded = [
+    event.supervisor_needed > 0 && {
+      label: `${event.supervisor_needed} Supervisor${event.supervisor_needed > 1 ? "s" : ""}`,
+      tone: "outline" as const,
+    },
+    event.emt_needed > 0 && {
+      label: `${event.emt_needed} EMT${event.emt_needed > 1 ? "s" : ""}`,
+      tone: "default" as const,
+    },
+    event.fa_emr_needed > 0 && {
+      label: `${event.fa_emr_needed} FA/EMR`,
+      tone: "secondary" as const,
+    },
+  ].filter(Boolean);
+
+  return (
+    <Card className={isPast ? "opacity-70" : ""}>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-lg">{event.event_name}</CardTitle>
+            <CardDescription className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <span className="inline-flex items-center gap-1">
+                <IconCalendarEvent className="size-4" stroke={1.5} />
+                {formatDate(event.event_date)}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <IconClockHour3 className="size-4" stroke={1.5} />
+                {formatTime(event.start_time)} – {formatTime(event.end_time)}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <IconMapPin2 className="size-4" stroke={1.5} />
+                {event.location}
+              </span>
+            </CardDescription>
+          </div>
+          {event.is_finalized && (
+            <Badge variant="default" className="ml-2">
+              Finalized
+            </Badge>
+          )}
+        </div>
+
+        {event.description && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            {event.description}
+          </p>
+        )}
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {positionsNeeded.map(
+            (slot) =>
+              slot && (
+                <Badge key={slot.label} variant={slot.tone}>
+                  <IconUsersGroup className="mr-1 size-3" stroke={1.5} />
+                  {slot.label} needed
+                </Badge>
+              )
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <IconUsersGroup className="size-4" stroke={1.5} />
+          <span>
+            {event.assigned_members_count ?? 0} member
+            {(event.assigned_members_count ?? 0) !== 1 ? "s" : ""} assigned
+          </span>
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        <Button size="sm" asChild>
+          <Link href={`/events/${event.event_id}/manage`}>
+            View Details &amp; Manage Hours
           </Link>
         </Button>
       </CardFooter>
