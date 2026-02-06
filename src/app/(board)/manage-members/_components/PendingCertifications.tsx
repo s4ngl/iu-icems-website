@@ -35,6 +35,7 @@ export function PendingCertifications() {
 
   useEffect(() => {
     fetchPendingCertifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchPendingCertifications() {

@@ -40,6 +40,7 @@ export function PenaltyPointsManagement({ member, onUpdate }: PenaltyPointsManag
 
   useEffect(() => {
     fetchPenaltyPoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [member.user_id]);
 
   async function fetchPenaltyPoints() {

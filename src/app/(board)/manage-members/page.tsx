@@ -22,6 +22,7 @@ export default function Page() {
 
   useEffect(() => {
     fetchMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchMembers() {

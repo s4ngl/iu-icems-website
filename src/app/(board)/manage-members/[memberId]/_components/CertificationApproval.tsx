@@ -33,7 +33,10 @@ export function CertificationApproval({ memberId }: CertificationApprovalProps) 
   const [expirationDate, setExpirationDate] = useState("");
 
   useEffect(() => {
-    fetchCertifications();
+    if (memberId) {
+      fetchCertifications();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberId]);
 
   async function fetchCertifications() {
