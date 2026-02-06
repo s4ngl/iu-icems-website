@@ -1,0 +1,3 @@
+-- Authentication is handled by Supabase Auth (auth.users table).
+-- No separate authentication table is needed.
+-- Password hashing, session tokens, and reset tokens are managed by Supabase.
