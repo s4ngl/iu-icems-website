@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         last_name: lastName,
         iu_email: email,
         phone_number: phone || "",
-        gender: 0,
+        gender: 2,
         class_year: classYear ?? 0,
         pronouns: pronouns ?? 0,
         position_web: 3,

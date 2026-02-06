@@ -1,6 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
+function parseFullName(fullName?: string): { firstName: string; lastName: string } {
+  if (!fullName || fullName.trim().length === 0) {
+    return { firstName: "", lastName: "" };
+  }
+  const parts = fullName.trim().split(/\s+/);
+  return {
+    firstName: parts[0],
+    lastName: parts.length > 1 ? parts.slice(1).join(" ") : "",
+  };
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -21,15 +32,18 @@ export async function GET(request: NextRequest) {
 
       if (!existingMember) {
         const metadata = data.user.user_metadata;
+        const { firstName, lastName } = parseFullName(
+          metadata?.full_name || metadata?.name
+        );
         await supabase.from("members").insert({
           user_id: data.user.id,
-          first_name: metadata?.full_name?.split(" ")[0] || metadata?.name?.split(" ")[0] || "",
-          last_name: metadata?.full_name?.split(" ").slice(1).join(" ") || metadata?.name?.split(" ").slice(1).join(" ") || "",
+          first_name: firstName,
+          last_name: lastName,
           iu_email: data.user.email || "",
           phone_number: "",
-          gender: 0,
+          gender: 2,
           class_year: 0,
-          pronouns: 0,
+          pronouns: 2,
           position_web: 3,
           account_status: 0,
         });
@@ -40,5 +54,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Auth error - redirect to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_error`);
+  const errorParam = code ? "code_exchange_failed" : "missing_auth_code";
+  return NextResponse.redirect(`${origin}/login?error=${errorParam}`);
 }
