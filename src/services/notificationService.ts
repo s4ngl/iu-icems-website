@@ -1,15 +1,18 @@
-import type { SendNotificationData } from "@/types/notification.types";
+import type { SendNotificationData, Notification } from "@/types/notification.types";
 
 export async function sendNotification(
   data: SendNotificationData
 ): Promise<{ error: string | null }> {
-  // Notification implementation depends on the notification channel (email, in-app, etc.)
-  // This is a placeholder that can be extended with email service integration
   try {
     const response = await fetch("/api/notifications/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        type: data.type,
+        recipients: [data.user_id],
+        message: data.message,
+        title: data.title,
+      }),
     });
 
     if (!response.ok) {
@@ -35,4 +38,18 @@ export async function sendBulkNotifications(
     .filter((e): e is string => e !== null);
 
   return { errors };
+}
+
+export async function getNotificationHistory(): Promise<{
+  data: Notification[];
+  error: string | null;
+}> {
+  try {
+    // In-app notification history would be stored in a notifications table
+    // For now, returns empty array as the notifications table hasn't been created yet
+    console.log("Fetching notification history");
+    return { data: [], error: null };
+  } catch {
+    return { data: [], error: "Failed to fetch notification history" };
+  }
 }
