@@ -52,12 +52,6 @@ const PRONOUN_LABELS: Record<number, string> = {
   2: "Other",
 };
 
-const GENDER_LABELS: Record<number, string> = {
-  0: "Female",
-  1: "Male",
-  2: "Other",
-};
-
 export function MemberProfile({ member }: MemberProfileProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

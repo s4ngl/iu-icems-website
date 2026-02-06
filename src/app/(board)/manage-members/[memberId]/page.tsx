@@ -20,12 +20,6 @@ export default function Page() {
   const [member, setMember] = useState<Member | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (memberId) {
-      fetchMember();
-    }
-  }, [memberId]);
-
   async function fetchMember() {
     try {
       setIsLoading(true);
@@ -42,6 +36,13 @@ export default function Page() {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (memberId) {
+      fetchMember();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberId]);
 
   if (isLoading) {
     return (

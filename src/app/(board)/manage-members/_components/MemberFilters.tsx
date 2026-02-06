@@ -19,19 +19,6 @@ interface MemberFiltersProps {
   onRoleChange: (value: number | null) => void;
 }
 
-const STATUS_LABELS: Record<number, string> = {
-  0: "Pending",
-  1: "Active",
-  2: "Inactive",
-};
-
-const ROLE_LABELS: Record<number, string> = {
-  0: "Admin",
-  1: "Board",
-  2: "Supervisor",
-  3: "Member",
-};
-
 export function MemberFilters({
   statusFilter,
   duesFilter,
