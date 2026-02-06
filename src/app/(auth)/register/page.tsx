@@ -10,6 +10,8 @@ import {
   IconPhone,
   IconArrowLeft,
   IconBrandGoogle,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -63,15 +65,55 @@ const pronounsMap: Record<string, number> = {
   other: 2,
 };
 
+function validatePassword(password: string): string[] {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push("Password must be at least 8 characters long");
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Password must contain at least one uppercase letter");
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push("Password must contain at least one lowercase letter");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("Password must contain at least one number");
+  }
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+    errors.push("Password must contain at least one special character");
+  }
+  
+  return errors;
+}
+
+function validatePhoneNumber(phone: string): boolean {
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  // Check if it's a valid US phone number (10 digits)
+  return digits.length === 10;
+}
+
+function formatPhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const { signUp, signInWithGoogle } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setPasswordErrors([]);
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -84,6 +126,14 @@ export default function RegisterPage() {
     const classYear = formData.get("classYear") as string;
     const pronouns = formData.get("pronouns") as string;
 
+    // Validate password
+    const pwdErrors = validatePassword(password);
+    if (pwdErrors.length > 0) {
+      setPasswordErrors(pwdErrors);
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setIsLoading(false);
@@ -92,6 +142,13 @@ export default function RegisterPage() {
 
     if (!email.endsWith("@iu.edu")) {
       setError("Only @iu.edu email addresses are allowed");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate phone number
+    if (!validatePhoneNumber(phone)) {
+      setError("Please enter a valid 10-digit US phone number");
       setIsLoading(false);
       return;
     }
@@ -160,10 +217,23 @@ export default function RegisterPage() {
               <p className="text-sm text-destructive">{error}</p>
             )}
 
+            {passwordErrors.length > 0 && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                <p className="font-medium mb-1">Password requirements:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {passwordErrors.map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <Field>
-                  <FieldLabel>First name</FieldLabel>
+                  <FieldLabel>
+                    First name <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <FieldGroup>
                     <IconUser className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -177,7 +247,9 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field>
-                  <FieldLabel>Last name</FieldLabel>
+                  <FieldLabel>
+                    Last name <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <FieldGroup>
                     <IconUser className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -192,7 +264,9 @@ export default function RegisterPage() {
               </div>
 
               <Field>
-                <FieldLabel>IU Email</FieldLabel>
+                <FieldLabel>
+                  IU Email <span className="text-destructive">*</span>
+                </FieldLabel>
                 <FieldGroup>
                   <IconMail className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -209,7 +283,9 @@ export default function RegisterPage() {
               </Field>
 
               <Field>
-                <FieldLabel>Phone number</FieldLabel>
+                <FieldLabel>
+                  Phone number <span className="text-destructive">*</span>
+                </FieldLabel>
                 <FieldGroup>
                   <IconPhone className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -218,8 +294,16 @@ export default function RegisterPage() {
                     placeholder="(555) 123-4567"
                     className="pl-8"
                     required
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      e.target.value = formatted;
+                    }}
+                    maxLength={14}
                   />
                 </FieldGroup>
+                <FieldDescription>
+                  Enter a valid 10-digit US phone number
+                </FieldDescription>
               </Field>
 
               <div className="grid grid-cols-2 gap-4">
@@ -261,30 +345,61 @@ export default function RegisterPage() {
               </div>
 
               <Field>
-                <FieldLabel>Password</FieldLabel>
+                <FieldLabel>
+                  Password <span className="text-destructive">*</span>
+                </FieldLabel>
                 <FieldGroup>
                   <IconLock className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="Create a password"
-                    className="pl-8"
+                    className="pl-8 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <IconEyeOff className="size-3.5" />
+                    ) : (
+                      <IconEye className="size-3.5" />
+                    )}
+                  </button>
                 </FieldGroup>
+                <FieldDescription>
+                  Minimum 8 characters with uppercase, lowercase, number, and special character
+                </FieldDescription>
               </Field>
 
               <Field>
-                <FieldLabel>Confirm password</FieldLabel>
+                <FieldLabel>
+                  Confirm password <span className="text-destructive">*</span>
+                </FieldLabel>
                 <FieldGroup>
                   <IconLock className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     placeholder="Re-enter your password"
-                    className="pl-8"
+                    className="pl-8 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <IconEyeOff className="size-3.5" />
+                    ) : (
+                      <IconEye className="size-3.5" />
+                    )}
+                  </button>
                 </FieldGroup>
               </Field>
 

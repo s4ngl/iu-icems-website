@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { memberNav, supervisorNav } from "@/config/navigation";
 
 export default function SupervisorLayout({
   children,
@@ -9,7 +8,7 @@ export default function SupervisorLayout({
 }) {
   return (
     <>
-      <Navbar navItems={[...memberNav, ...supervisorNav]} />
+      <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
       <Footer />
     </>

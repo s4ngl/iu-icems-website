@@ -8,6 +8,8 @@ import {
   IconLock,
   IconArrowLeft,
   IconBrandGoogle,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,7 @@ function LoginForm() {
   const { signInWithGoogle, signInWithPassword } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const redirect = searchParams.get("redirect") || "/dashboard";
 
@@ -123,12 +126,24 @@ function LoginForm() {
                 <FieldGroup>
                   <IconLock className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     placeholder="Enter your password"
-                    className="pl-8"
+                    className="pl-8 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <IconEyeOff className="size-3.5" />
+                    ) : (
+                      <IconEye className="size-3.5" />
+                    )}
+                  </button>
                 </FieldGroup>
               </Field>
 
