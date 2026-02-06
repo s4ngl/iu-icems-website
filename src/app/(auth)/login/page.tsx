@@ -59,6 +59,7 @@ function LoginForm() {
       setIsLoading(false);
     } else {
       router.push(redirect);
+      router.refresh();
     }
   }
 
